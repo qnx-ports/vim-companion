@@ -1,0 +1,105 @@
+pkgname=vim
+pkgver=9.1.0707
+pkgrel=1
+_luaver=5.4
+pkgdesc="Improved vi-style text editor"
+url="https://www.vim.org/"
+arch="all"
+license="Vim"
+depends="ncurses qnx-io-sock"
+makedepends="ncurses-dev qnx-io-sock-dev" 
+subpackages="
+    $pkgname-doc
+    ${pkgname}diff:${pkgname}diff:noarch
+    $pkgname-tutor:tutor:noarch
+    $pkgname-common:common:noarch
+    xxd
+    "
+source="$pkgname-$pkgver.tar.gz::https://github.com/vim/vim/archive/refs/tags/v$pkgver.tar.gz"
+options="!check"
+
+prepare() {
+    # Read vimrc from /etc/vim
+    echo '#define SYS_VIMRC_FILE "/etc/vim/vimrc"' >> src/feature.h
+    default_prepare
+}
+
+build() {
+    export CFLAGS="$CFLAGS -flto=auto -O2"
+    export vim_cv_toupper_broken=yes
+    export vim_cv_terminfo=yes
+    export vim_cv_tgetent=zero
+    export vim_cv_getcwd_broken=no
+    export vim_cv_stat_ignores_slash=yes
+    export vim_cv_memmove_handles_overlap=yes
+    export vim_cv_uname_output="QNX"
+    export ac_cv_prog_STRIP=$CTARGET-strip
+
+    ./configure \
+        --build=$CBUILD \
+        --host=$CHOST \
+        --prefix=/usr \
+        --enable-luainterp=dynamic \
+        --enable-perlinterp=dynamic \
+        --enable-python3interp=dynamic \
+        --enable-rubyinterp=dynamic \
+        --enable-tclinterp=dynamic \
+        --without-x \
+        --disable-nls \
+        --enable-acl \
+        --enable-multibyte \
+        --enable-gui=no \
+	--with-lua-prefix=/usr/lua$_luaver \
+        --with-compiledby="QNX" \
+        --with-tlib="ncurses"
+    make
+}
+
+check() {
+    make test
+}
+
+package() {
+    depends="vim-common=$pkgver-r$pkgrel xxd=$pkgver-r$pkgrel"
+
+    make -j1 DESTDIR="$pkgdir" install
+
+    install -Dm644 runtime/doc/uganda.txt \
+        "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+common() {
+    replaces="vim gvim"
+    #amove etc/vim/vimrc
+    amove usr/share/vim
+}
+
+vimdiff() {
+    pkgdesc="view file diffs in vim"
+    depends="diffutils vim=$pkgver-r$pkgrel"
+    replaces="vim gvim"
+    provides="cmd:vimdiff=$pkgver-r$pkgrel"
+
+    amove usr/bin/vimdiff
+}
+
+tutor() {
+    pkgdesc="vim tutor and tutor files"
+    depends="vim=$pkgver-r$pkgrel"
+    replaces="gvim vim"
+
+    amove usr/bin/vimtutor
+    amove usr/share/vim/vim*/tutor
+}
+
+xxd() {
+    pkgdesc="tool to make (or reverse) a hex dump"
+    depends=""
+    replaces="gvim vim"
+
+    amove usr/bin/xxd
+}
+
+sha512sums="
+694d9b8d08cd9a980c4ea9c8d6510181f1978ee72125bcde02add255057f2f36d8b14f54180e5ad715d8a09911496f79993a612128bed9f2deff3578d4f98660  vim-9.1.0707.tar.gz
+"

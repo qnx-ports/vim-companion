@@ -1,6 +1,6 @@
 pkgname=vim
 pkgver=9.1.0707
-pkgrel=${pkgrel:-0}
+pkgrel=1
 _luaver=5.4
 pkgdesc="Improved vi-style text editor"
 url="https://www.vim.org/"
@@ -100,7 +100,6 @@ xxd() {
     amove usr/bin/xxd
 }
 
-options="$options ${DISABLE_CHECK:+!check}"
 sha512sums="
 694d9b8d08cd9a980c4ea9c8d6510181f1978ee72125bcde02add255057f2f36d8b14f54180e5ad715d8a09911496f79993a612128bed9f2deff3578d4f98660  vim-9.1.0707.tar.gz
 "
